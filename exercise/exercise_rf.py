@@ -33,39 +33,55 @@ def main(save_fig: bool, result_dir: str, num_trees: int, tree_depth: int):
                                                                         random_state=42)
     iterations = range(50)
     num_trees = 1
-    last_test_acc = 0
-    for i in iterations:
-        # initialize the forest
-        forest = sk_ensemble.RandomForestClassifier(max_features=feat_train.shape[1],
-                                                    n_estimators=num_trees,
-                                                    max_depth=tree_depth)
+    tree_depth = 1
+    test_acc_num_tree = [0]
+    test_acc_tree_depth = [0]
 
-        # train the forest
-        print('Decision forest training...')
-        forest.fit(feat_train, labels_train)
+    for j in iterations:
+        for i in iterations:
+            # initialize the forest
+            forest = sk_ensemble.RandomForestClassifier(max_features=feat_train.shape[1],
+                                                        n_estimators=num_trees,
+                                                        max_depth=tree_depth)
 
-        # apply the forest to test data
-        print('Decision forest testing...')
-        predictions_test = forest.predict(feat_test)
-        predictions_train = forest.predict(feat_train)
+            # train the forest
+            print('Decision forest training...')
+            forest.fit(feat_train, labels_train)
 
-        # let's have a look at the feature importance
-        print('Feature importance:')
-        print(forest.feature_importances_)
+            # apply the forest to test data
+            print('Decision forest testing...')
+            predictions_test = forest.predict(feat_test)
+            predictions_train = forest.predict(feat_train)
+
+            # let's have a look at the feature importance
+            print('Feature importance:')
+            print(forest.feature_importances_)
+
+            # calculate training and testing accuracies
+            train_acc = accuracy_score(labels_train, predictions_train)
+            test_acc = accuracy_score(labels_test, predictions_test)
+
+            print("Training accuracy: {0:.2%}".format(train_acc))
+            print("Testing accuracy: {0:.2%}".format(test_acc))
+
+            if test_acc_num_tree[-1] > test_acc:
+                break
+            num_trees += 1
+            test_acc_num_tree.append(test_acc)
 
         # calculate training and testing accuracies
-        train_acc = accuracy_score(labels_train, predictions_train)
-        test_acc = accuracy_score(labels_test, predictions_test)
+        test_acc2 = accuracy_score(labels_test, predictions_test)
 
-        print("Training accuracy: {0:.2%}".format(train_acc))
-        print("Testing accuracy: {0:.2%}".format(test_acc))
+        #print(f"last_test_acc {last_last_test_acc}")
+        #print("num_trees", num_trees, " and ", tree_depth)
 
-        if last_test_acc > test_acc:
+        #print(f"test_acc_tree_depth {test_acc_tree_depth}")
+        #print(f"test_acc_num_tree {test_acc_num_tree}")
+        if test_acc_tree_depth[-1] > test_acc2:
+            print("BRAKE")
             break
-        print(f"last_test_acc {last_test_acc}")
-        print("num_trees", num_trees)
-        num_trees += 1
-        last_test_acc = test_acc
+        test_acc_tree_depth.append(test_acc2)
+        tree_depth += 1
 
 
     # plot the result
