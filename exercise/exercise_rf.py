@@ -31,31 +31,42 @@ def main(save_fig: bool, result_dir: str, num_trees: int, tree_depth: int):
     # split into training and  testing data
     feat_train, feat_test, labels_train, labels_test = train_test_split(features, labels, test_size=0.5,
                                                                         random_state=42)
+    iterations = range(50)
+    num_trees = 1
+    last_test_acc = 0
+    for i in iterations:
+        # initialize the forest
+        forest = sk_ensemble.RandomForestClassifier(max_features=feat_train.shape[1],
+                                                    n_estimators=num_trees,
+                                                    max_depth=tree_depth)
 
-    # initialize the forest
-    forest = sk_ensemble.RandomForestClassifier(max_features=feat_train.shape[1],
-                                                n_estimators=num_trees,
-                                                max_depth=tree_depth)
+        # train the forest
+        print('Decision forest training...')
+        forest.fit(feat_train, labels_train)
 
-    # train the forest
-    print('Decision forest training...')
-    forest.fit(feat_train, labels_train)
+        # apply the forest to test data
+        print('Decision forest testing...')
+        predictions_test = forest.predict(feat_test)
+        predictions_train = forest.predict(feat_train)
 
-    # apply the forest to test data
-    print('Decision forest testing...')
-    predictions_test = forest.predict(feat_test)
-    predictions_train = forest.predict(feat_train)
+        # let's have a look at the feature importance
+        print('Feature importance:')
+        print(forest.feature_importances_)
 
-    # let's have a look at the feature importance
-    print('Feature importance:')
-    print(forest.feature_importances_)
+        # calculate training and testing accuracies
+        train_acc = accuracy_score(labels_train, predictions_train)
+        test_acc = accuracy_score(labels_test, predictions_test)
 
-    # calculate training and testing accuracies
-    train_acc = accuracy_score(labels_train, predictions_train)
-    test_acc = accuracy_score(labels_test, predictions_test)
+        print("Training accuracy: {0:.2%}".format(train_acc))
+        print("Testing accuracy: {0:.2%}".format(test_acc))
 
-    print("Training accuracy: {0:.2%}".format(train_acc))
-    print("Testing accuracy: {0:.2%}".format(test_acc))
+        if last_test_acc > test_acc:
+            break
+        print(f"last_test_acc {last_test_acc}")
+        print("num_trees", num_trees)
+        num_trees += 1
+        last_test_acc = test_acc
+
 
     # plot the result
     h = .02  # step size in the mesh
