@@ -1,6 +1,7 @@
 """This module contains utility classes and functions."""
 import enum
 import os
+#import sys
 import typing as t
 import warnings
 
@@ -11,11 +12,16 @@ import pymia.evaluation.evaluator as eval_
 import pymia.evaluation.metric as metric
 import SimpleITK as sitk
 
+#from .. import data
+#from mialab import data
+#from data import structure
 import mialab.data.structure as structure
 import mialab.filtering.feature_extraction as fltr_feat
 import mialab.filtering.postprocessing as fltr_postp
-import mialab.filtering.preprocessing as fltr_prep
+import mialab.filtering.preprocessing_Alice_Fornaciari as fltr_prep
 import mialab.utilities.multi_processor as mproc
+
+
 
 atlas_t1 = sitk.Image()
 atlas_t2 = sitk.Image()
@@ -68,7 +74,7 @@ class FeatureExtractor:
             structure.BrainImage: The image with extracted features.
         """
         # todo: add T2w features
-        warnings.warn('No features from T2-weighted image extracted.')
+        #warnings.warn('No features from T2-weighted image extracted.')
 
 
         if self.coordinates_feature:
@@ -76,13 +82,21 @@ class FeatureExtractor:
             self.img.feature_images[FeatureImageTypes.ATLAS_COORD] = \
                 atlas_coordinates.execute(self.img.images[structure.BrainImageTypes.T1w])
 
+            self.img.feature_images[FeatureImageTypes.ATLAS_COORD] = \
+                atlas_coordinates.execute(self.img.images[structure.BrainImageTypes.T2w])
+
         if self.intensity_feature:
             self.img.feature_images[FeatureImageTypes.T1w_INTENSITY] = self.img.images[structure.BrainImageTypes.T1w]
+
+            self.img.feature_images[FeatureImageTypes.T2w_INTENSITY] = self.img.images[structure.BrainImageTypes.T2w]
 
         if self.gradient_intensity_feature:
             # compute gradient magnitude images
             self.img.feature_images[FeatureImageTypes.T1w_GRADIENT_INTENSITY] = \
                 sitk.GradientMagnitude(self.img.images[structure.BrainImageTypes.T1w])
+
+            self.img.feature_images[FeatureImageTypes.T2w_GRADIENT_INTENSITY] = \
+                sitk.GradientMagnitude(self.img.images[structure.BrainImageTypes.T2w])
 
         self._generate_feature_matrix()
 
@@ -293,8 +307,10 @@ def init_evaluator() -> eval_.Evaluator:
     metrics = [metric.DiceCoefficient()]
     # todo: add hausdorff distance, 95th percentile (see metric.HausdorffDistance)
     #warnings.warn('Initialized evaluation with the Dice coefficient. Do you know other suitable metrics?')--> use HD
+    # alternative --> metrics = [ metric.DiceCoefficient(), metrics.append(metric.HausdorffDistance(percentile=95.0, metric='HDRFDST'))]
 
-    metrics.append(metric.categorical.HausdorffDistance(percentile=95.0, metric='HDRFDST'))
+    metrics = metrics.append(metric.categorical.HausdorffDistance(percentile=95.0, metric='HDRFDST'))
+
 
 
 

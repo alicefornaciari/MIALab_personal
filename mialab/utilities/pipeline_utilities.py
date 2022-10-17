@@ -70,6 +70,7 @@ class FeatureExtractor:
         # todo: add T2w features
         warnings.warn('No features from T2-weighted image extracted.')
 
+
         if self.coordinates_feature:
             atlas_coordinates = fltr_feat.AtlasCoordinates()
             self.img.feature_images[FeatureImageTypes.ATLAS_COORD] = \
@@ -291,7 +292,11 @@ def init_evaluator() -> eval_.Evaluator:
     # initialize metrics
     metrics = [metric.DiceCoefficient()]
     # todo: add hausdorff distance, 95th percentile (see metric.HausdorffDistance)
-    warnings.warn('Initialized evaluation with the Dice coefficient. Do you know other suitable metrics?')
+    #warnings.warn('Initialized evaluation with the Dice coefficient. Do you know other suitable metrics?')--> use HD
+
+    metrics.append(metric.categorical.HausdorffDistance(percentile=95.0, metric='HDRFDST'))
+
+
 
     # define the labels to evaluate
     labels = {1: 'WhiteMatter',
