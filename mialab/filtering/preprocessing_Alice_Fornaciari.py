@@ -37,9 +37,13 @@ class ImageNormalization(pymia_fltr.Filter):
         #zscores = stats.zscore(img_arr)
 
         # method (2) --> Z-Score from Scratch --> I = (I-µ)/∂
-        mean = [image.mean() for image in img_arr]
-        variance = [np.var(image) for image in img_arr]
-        img_arr = [(value - mean[index]) / variance[index] for index,value in enumerate(img_arr)]
+        #mean = [image.mean() for image in img_arr]
+        #variance = [np.var(image) for image in img_arr]
+        #img_arr = [(value - mean[index]) / variance[index] for index,value in enumerate(img_arr)]
+
+        mean = img_arr.mean()
+        std = img_arr.var()
+        img_arr = (img_arr-mean)/std
 
         #method (3)
         #image = (img_arr - np.min(img_arr)) / (np.max(img_arr) - np.min(img_arr))
@@ -94,7 +98,7 @@ class SkullStripping(pymia_fltr.Filter):
        # warnings.warn('No skull-stripping implemented. Returning unprocessed image.')
         image = sitk.Mask(image, mask)
 
-        return image
+        return image #return ehat you modified
 
     def __str__(self):
         """Gets a printable string representation.
@@ -148,9 +152,14 @@ class ImageRegistration(pymia_fltr.Filter):
         transform = params.transformation
         is_ground_truth = params.is_ground_truth  # the ground truth will be handled slightly different
 
-        image = sitk.Resample(is_ground_truth,
-                              referenceImage=atlas,
-                              transform=transform)
+      # NO --->   image = sitk.Resample(is_ground_truth, referenceImage=atlas, transform=transform)
+
+        if is_ground_truth:
+            image = sitk.Resample(image, atlas, transform, sitk.sitkNearestNeighbor, 0.0, image.GetPixelIDValue())
+        else:
+            image = sitk.Resample(image, atlas, transform, sitk.sitkLinear, 0.0, image.GetPixelIDValue())
+
+
 
 
         # note: if you are interested in registration, and want to test it, have a look at
